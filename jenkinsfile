@@ -1,44 +1,11 @@
 pipeline {
     agent any
-
-    tools {
-        maven 'localMaven'
-    }
-
-    stages{
-        stage('Build'){
+    stages {
+        stage('build') {
             steps {
                 bat 'mvn clean package'
-            }
-            post {
-                success {
-                    echo 'Now Archiving...'
-                    archiveArtifacts artifacts: '**/target/*.war'
-                }
+                bat "docker build . -t tomcatwebapp:${env.BUILD_ID}"
             }
         }
-        stage ('Deploy to Staging'){
-            steps {
-                build job: 'Deploy-to-staging'
-            }
-        }
-
-        stage ('Deploy to Production') {
-            steps {
-                timeout(time:5, unit:'DAYS') {
-                    input message:'approve PRODUCTION Deployment?'
-                }
-                build job: 'deploy-to-prod'
-            }
-            post {
-                success {
-                    echo 'Code Successfully deployed to Production'
-                }
-
-                failure {
-                    echo 'Deployment failed.'
-                }
-            }
-        }
-    }
+    }  
 }
